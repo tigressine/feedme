@@ -7,15 +7,17 @@ import pickle
 class Order:
     """
     """
-    def __init__(self, name, establishment):
+    def __init__(self, name, establishment, delivery_method, address):
         self.name = name
         self.establishment = establishment
+        self.delivery_method = delivery_method
+        self.address = address
         self.items = []
 
     def add_item(self, item):
         self.items.append(item)
 
-    def __add__(self, other):
+    def __add__(self, other):####
         if self.establishment != other.establishment:
             raise TypeError("orders are from different establishments")
         name = '{0} and {1}'.format(self.name, other.name)
@@ -39,48 +41,79 @@ def command_help():
 
 def command_order_new():
     header()
-    print("Enter establishment name or type 'list places' for a list")
-    place = input("> ")
+    order = create_new_order()
+    order.add_item(input_item())
+    print("Add more items, or finish order? (Type 'add' or 'finish')")
+    question = rinput("> ", ['add', 'finish'])
+    while question == 'add':
+        order.add_item(input_item())
+        print("Add more items, or finish order? (Type 'add' or 'finish')")
+        question = rinput("> ", ['add', 'finish'])
 
-    while place not in places.keys():
-        if place == 'list places':
-            for key in places.keys():
-                print(key)
-        elif place == 'q':
-            return
-        else:
-            print("Establishment not available")
-        place = input("> ")
 
-    if len(places[place]['delivery methods']) != 1:
-        print("Enter delivery method or type 'list methods'")
-        delivery_method = input("> ")
 
-        while delivery_method not in places[place]['delivery methods']:
-            if delivery_method == 'list methods':
-                for method in places[place]['delivery methods']:
-                    print(method)
-            elif delivery_method == 'q':
-                return
-            else:
-                print("Invalid delivery method")
-            delivery_method = input("> ")
+
+
+
+def create_new_order():
+    print("Enter a name for the order (e.g. 'favorite pizza')")
+    name = input("> ")
+
+    print("Enter establishment name or type 'list'")
+    valid = list(establishments.keys()) + ['list']
+    establishment = rinput("> ",
+                           valid,
+                           invalid="Establishment not available")
+    while establishment == 'list':
+        for each in establishments.keys():
+            print(each)
+        establishment = rinput("> ",
+                               valid,
+                               invalid="Establishment not available")
+
+    if len(establishments[establishment]['delivery methods']) != 1:
+        print("Enter delivery method or type 'list'")
+        valid = establishments[establishment]['delivery methods'] + ['list']
+        method = rinput("> ", valid, invalid="Invalid delivery method")
+        while method == 'list':
+            for each in establishments[establishment]['delivery methods']:
+                print(each)
+            method = rinput("> ", valid, invalid="Invalid delivery method")
     else:
-        delivery_method = places[place]['delivery methods']
-        print("Only {} available. Selecting by default.".format(places[place]['delivery methods']))
+        print("Only {} available. Selecting by default.".format(
+            establishments[establishment]['delivery methods']))
+        method = establishments[establishment]['delivery methods']
     
     if len(personal) != 0:
         prompt="(Y/n): "
-        ask="Deliver to default address? ({})".format(personal['address']['default'][0])
+        ask="Deliver to default address? ({})".format(
+            personal['address']['default'][0])
         if confirm_input(prompt, ask):
             address = personal['address']
         else:
             for address in personal['address']:
-                print(personal['address'][address]) #fancy print
-
+                print(personal['address'][address]) #fancy print##unfinished
+    return Order(name, establishment, method, address)
     
+def input_item():
+    print("Type the name of the item you'd like to add, or type 'list'")
+    valid = list(items.keys()) + ['list']
+    item = rinput("> ", valid)
+    while item == 'list':
+        for each in items.keys():
+            print(each)
+        item = rinput("> ", valid)
 
-
+    print("Which options would you like to add for the item? Leave blank " +
+          "for no options.")
+    valid = items[item][1::] + ['list', '']
+    options = rinput("> ", valid)
+    while options == 'list':
+        for each in items[item][1::]:
+            print(each)
+        options = rinput("> ", valid)
+    return Item(item, options)
+    
 def command_quit():
     header()
     if confirm_input(ask="Are you sure you'd like to quit? (Y/n)"):
@@ -94,13 +127,13 @@ def header():
     text = "FeedMe"
     print(text)
 
-def load_places():
+def load_establishments():
     try:
-        with open(F_PLACES, 'r') as f:
-            places = json.load(f)
+        with open(F_ESTABLISHMENTS, 'r') as f:
+            establishments = json.load(f)
     except FileNotFoundError:
-        places = {}
-    return places
+        establishments = {}
+    return establishments
 
 def load_orders():
     try:
@@ -130,11 +163,12 @@ def main():
         valid[command]()
 ###################################################
 
-F_PLACES = 'establishments.json'
-F_ORDERS = 'orders.data'
-F_PERSONAL = 'personal.json'
+F_ESTABLISHMENTS = 'data/establishments.json'
+F_ORDERS = 'data/orders.data'
+F_PERSONAL = 'data/personal.json'
 
-places = load_places()
+items = {'cheeze': ['lipstick'], 'pepeer': ['nomayo','mayo'], 'suasage': []}
+establishments = load_establishments()
 orders = load_orders()
 personal = load_personal()
 main()

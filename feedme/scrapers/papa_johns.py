@@ -1,11 +1,42 @@
 #! /usr/bin/env python3
 from selenium import webdriver
+from selenium.webdriver.common.by import By as identifier
+from selenium.webdriver.support.ui import WebDriverWait as driver_wait
+from selenium.webdriver.support import expected_conditions as conditions
 
 def main():
+    global page
+
+    page = webdriver.Chrome()
+    page.get("https://www.papajohns.com/order/stores-near-me")
+    
     if ORDER['delivery method'] == 'carryout':
         fill_address_carryout()
     elif ORDER['delivery method'] == 'delivery':
         fill_address_delivery()
+
+def scrape_locations():
+    
+    e_store_summary = driver_wait(page, 2).until(
+            conditions.presence_of_element_located(
+                (identifier.ID, 'store-summary-accord-id')))
+    e_view_more = page.find_element_by_class_name('view-more-stores')
+    e_view_more.click()
+    e_stores = e_store_summary.find_elements_by_class_name('store-location')
+
+    for each in e_stores:
+        print(each.text[0])
+
+def fill_address_carryout():
+    e_form = page.find_element_by_id('carryout-form')
+    e_form.click()
+    e_zip = e_form.find_element_by_id('locations-zipPostalcode')
+    e_zip.send_keys(ADDRESS['postal'])
+    e_submit = e_form.find_element_by_class_name('button-desk')
+    e_submit = e_submit.find_element_by_class_name('button')
+    e_submit.click()
+    scrape_locations()
+
 
 def fill_address_delivery():
     e_form = page.find_element_by_id('delivery-form')
@@ -61,8 +92,5 @@ ADDRESS = {'first_line': '12336 Golden Knight Circle',
            'state/province': 'Florida',
            'country': 'USA',
            'postal': '32817'}
-
-page = webdriver.Chrome()
-page.get("https://www.papajohns.com/order/stores-near-me")
 
 main()
