@@ -1,8 +1,10 @@
 #! /usr/bin/env python3
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By as identifier
 from selenium.webdriver.support.ui import WebDriverWait as driver_wait
 from selenium.webdriver.support import expected_conditions as conditions
+from selenium.common.exceptions import TimeoutException
 
 def main():
     global page
@@ -10,13 +12,16 @@ def main():
     page = webdriver.Chrome()
     page.get("https://www.papajohns.com/order/stores-near-me")
     
+    #scrape_menu()
     if ORDER['delivery method'] == 'carryout':
         fill_address_carryout()
     elif ORDER['delivery method'] == 'delivery':
         fill_address_delivery()
 
+def wait(driver, timeout, condition):#######
+    driver_wait(driver, timeout).until(condition)
+
 def scrape_locations():
-    
     e_store_summary = driver_wait(page, 2).until(
             conditions.presence_of_element_located(
                 (identifier.ID, 'store-summary-accord-id')))
@@ -27,6 +32,45 @@ def scrape_locations():
     for each in e_stores:
         print(each.text[0])
 
+def scrape_menu():
+    def add_to_products(elements_list, category):
+        for element in elements_list:
+            name = element.find_element('tag name', 'h3').text
+            description = element.find_element(
+                    'class name', 
+                    'description-short').text
+            element.find_element('class name', 'button-small').click()
+            element.find_element('class name', 'ingredient-select').click()
+            order_form = element.find_element('class name', 'product-order-form')
+            sizes = order_form.find_elements('tag name', 'li')
+            element.find_element('class name', 'icon-close').click()
+            for each in sizes:
+                print(each.find_element('tag name', 'span').text)
+            options = 'yo'
+            products[name] = {
+                    'description':description,
+                    'category':category,
+                    'sizes':sizes,
+                    'options':options}
+    
+    categories = ['Pizza','Sides','Desserts','Drinks','Extras']
+    products = {}
+    url_stub = 'https://www.papajohns.com/order/menu?category={0}'
+    for category in categories:
+        if category == 'Pizza':
+            time.sleep(1)
+        else:
+            page.get(url_stub.format(category))
+        product_elements = page.find_elements('class name', 'product')
+        add_to_products(product_elements, category)
+    
+    page.get("https://www.papajohns.com/order/specials")
+    specials_elements = page.find_elements('class name', 'product-specials')
+    add_to_products(specials_elements, 'Specials')
+   
+    for each in products:
+        print(each, ": ", products[each])
+
 def fill_address_carryout():
     e_form = page.find_element_by_id('carryout-form')
     e_form.click()
@@ -35,8 +79,7 @@ def fill_address_carryout():
     e_submit = e_form.find_element_by_class_name('button-desk')
     e_submit = e_submit.find_element_by_class_name('button')
     e_submit.click()
-    scrape_locations()
-
+    #scrape_locations()
 
 def fill_address_delivery():
     e_form = page.find_element_by_id('delivery-form')
@@ -68,6 +111,8 @@ def fill_address_delivery():
     e_submit = e_form.find_element_by_class_name('button-set')
     e_submit = e_submit.find_element_by_class_name('button')
     e_submit.click()
+
+    scrape_menu()
 
 ORDER = {'items': [{'name': 'cheese pizza',
                     'size': 'medium',
