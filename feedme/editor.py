@@ -58,7 +58,18 @@ def command_help():
     header()
     for key, value in COMMANDS.items():
         print(key, value)
-
+###Use this to clean up the command_orders_new mess fam
+def display_items(items, ask, prompt="> "):
+    header()
+    list_items(items)
+    print(ask)
+    item = rinput(prompt, items.keys())
+    return item
+    
+def list_items(items):
+    for item in enumerate(items):
+        print(item[0], item[1])
+#######
 def command_orders_list():
     header()
     for order in orders:
@@ -154,7 +165,7 @@ def header():
     text = "FeedMe"
     print(text)
 
-def load_file(FILE, return_type = {}, read_method='r', read_type = json):
+def load_file(FILE, return_type={}, read_method='r', read_type=json):
     try:
         with open(FILE, read_method) as f:
             data = read_type.load(f)
