@@ -154,29 +154,14 @@ def header():
     text = "FeedMe"
     print(text)
 
-def load_establishments():
+def load_file(FILE, return_type = {}, read_method='r', read_type = json):
     try:
-        with open(F_ESTABLISHMENTS, 'r') as f:
-            establishments = json.load(f)
+        with open(FILE, read_method) as f:
+            data = read_type.load(f)
     except FileNotFoundError:
-        establishments = {}
-    return establishments
+        data = return_type
+    return data
 
-def load_orders():
-    try:
-        with open(F_ORDERS, 'rb') as f:
-            orders = pickle.load(f)
-    except FileNotFoundError:
-        orders = []
-    return orders
-
-def load_personal():
-    try:
-        with open(F_PERSONAL, 'r') as f:
-            personal = json.load(f)
-    except FileNotFoundError:
-        personal = {}
-    return personal
 
 ###################################################
 F_ESTABLISHMENTS = 'data/establishments.json'
@@ -190,7 +175,10 @@ COMMANDS = {'h':command_help,
             'q':command_quit}
 
 items = {'cheeze': ['lipstick'], 'pepeer': ['nomayo','mayo'], 'suasage': []}
-establishments = load_establishments()
-orders = load_orders()
-personal = load_personal()
+establishments = load_file(F_ESTABLISHMENTS)
+orders = load_file(F_ORDERS,
+                   return_type=[],
+                   read_method='rb',
+                   read_type=pickle)
+personal = load_file(F_PERSONAL)
 main()
