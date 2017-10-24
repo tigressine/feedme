@@ -58,6 +58,7 @@ def command_help():
     header()
     for key, value in COMMANDS.items():
         print(key, value)
+
 ###Use this to clean up the command_orders_new mess fam
 def display_items(items, ask, prompt="> "):
     header()
@@ -79,53 +80,23 @@ def command_orders_list():
 def command_orders_new():
 
     def new_item(order):
-        print("Type the name of the item you'd like to add, or type 'list'")
-        valid = list(items.keys()) + ['list']
-        item = rinput("> ", valid)
-        while item == 'list':
-            for each in items.keys():
-                print(each)
-            item = rinput("> ", valid)
-
-        print("Which options would you like to add for the item? Leave " + 
+        ask = "Type the name of the item you'd like to add"
+        item = display_items(items.keys(), ask)
+        ask = ("Which options would you like to add for the item? Leave " + 
               "blank for no options.")
-        valid = items[item][1::] + ['list', '']
-        options = rinput("> ", valid)
-        while options == 'list':
-            for each in items[item][1::]:
-                print(each)
-            options = rinput("> ", valid)
+        option = display_items(items[item], ask)
         order.add_item(item, options)
 
     header()
     print("Enter a name for the order (e.g. 'favorite pizza')")
     name = input("> ")
 
-    print("Enter establishment name or type 'list'")
-    valid = list(establishments.keys()) + ['list']
-    establishment = rinput("> ",
-                           valid,
-                           invalid="Establishment not available")
-    while establishment == 'list':
-        for each in establishments.keys():
-            print(each)
-        establishment = rinput("> ",
-                               valid,
-                               invalid="Establishment not available")
+    ask="Enter establishment name or type 'list'"
+    establishment = list_items(establishments, ask)
 
-    if len(establishments[establishment]['delivery methods']) != 1:
-        print("Enter delivery method or type 'list'")
-        valid = establishments[establishment]['delivery methods'] + ['list']
-        method = rinput("> ", valid, invalid="Invalid delivery method")
-        while method == 'list':
-            for each in establishments[establishment]['delivery methods']:
-                print(each)
-            method = rinput("> ", valid, invalid="Invalid delivery method")
-    else:
-        print("Only {} available. Selecting by default.".format(
-            establishments[establishment]['delivery methods']))
-        method = establishments[establishment]['delivery methods']
-    
+    ask="Enter delivery method"
+    method = list_items(establishments[establishment]['delivery method'], ask)
+    ###
     if len(personal) != 0:
         prompt="(Y/n): "
         ask="Deliver to default address? ({0})".format(
@@ -135,9 +106,10 @@ def command_orders_new():
         else:
             for address in personal['address']:
                 print(personal['address'][address]) #fancy print##unfinished
-    
+    ###
     order = Order(name, establishment, method, address)
     new_item(order)
+    
     print("Add more items, or finish order? (Type 'add' or 'finish')")
     question = rinput("> ", ['add', 'finish'])
     while question == 'add':
