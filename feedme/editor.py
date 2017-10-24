@@ -1,167 +1,143 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
+#REMOVE ME PLEASE
+import mitu
 from mitu import confirm_input, rinput, rprint
 import os
-import json
-import pickle
+import math
+import shutil
+import random
+import sqlite3 as sql
 
-class Order:
-    """
-    """
-    def __init__(self, name, establishment, delivery_method, address):
-        self.name = name
-        self.establishment = establishment
-        self.delivery_method = delivery_method
-        self.address = address
-        self.items = {}
-    
-    def __add__(self, other):
-        if self.establishment != other.establishment:
-            raise TypeError("orders are from different establishments")
-        if self.delivery_method != other.delivery_method:
-            raise TypeError("orders use different delivery methods")
-        if self.address != other.address:
-            raise TypeError("orders are delivered to different addresses")
-        
-        new_name = '{0} and {1}'.format(self.name, other.name)
-        new_order = Order(
-                new_name, 
-                self.establishment, 
-                self.delivery_method, 
-                self.address)
-        new_order.items = self.items + other.items
-        return new_order
+#######TEMPORARY, will be removed###############################################
+def TEMPORARY_POPULATE_DATABASE():
+    db = sql.connect("data/papa.db")
+    curse = db.cursor()
 
-    def __len__(self):
-        return len(self.items)
+    try:
+        curse.execute("CREATE TABLE obtain (method text)")
+        curse.execute("CREATE TABLE payment (method text)")
+        curse.execute("CREATE TABLE items (name text, options text)")
+        curse.execute("CREATE TABLE options (name text, options text)")
+    except:
+        pass
+    curse.execute("INSERT INTO obtain ('method') VALUES ('delivery')")
+    curse.execute("INSERT INTO obtain ('method') VALUES ('carryout')")
+    curse.execute("INSERT INTO payment ('method') VALUES ('cash')")
+    curse.execute("INSERT INTO payment ('method') VALUES ('credit')")
+    curse.execute("INSERT INTO payment ('method') VALUES ('venmo')")
+    foods = [('cheese pizza','options1'),
+             ('pepperoni pizza', 'options1'),
+             ('diet coke', 'options0'),
+             ('knots', 'options2')]
+    for food in foods:
+        curse.execute("INSERT INTO items VALUES (?,?)", (food[0], food[1]))
+    options = [('options0', 'no options'),
+               ('options1', 'extra cheese;no cheese;green pepper;blueberries'),
+               ('options2', 'vegan;extra sauce')]
+    for option in options:
+        curse.execute("INSERT INTO options VALUES (?,?)", (option[0], option[1]))
+    db.commit()
 
-    def __repr__(self):
-        return 'Order(\'{0}\')'.format(self.name)
-
-    def __str__(self):
-        return 'Order \'{0}\', containing {1} items'.format(
-                self.name,
-                self.__len__())
-
-    def add_item(self, name, options):
-        self.items[name] = options
-
-########################################
+################################################################################
 def main():
     header()
-    
-    while True:
-        print("What would you like to do? ('help' for a list of commands)")
-        command = rinput("> ", COMMANDS.keys())
-        COMMANDS[command]()
 
+    print("Welcome to the FeedMe Editor Tool!")
+    while True:
+        print("What would you like to do? (type 'help' for a list of commands)")
+        command = rinput("> ", COMMANDS.keys(), escape=[], regex=True)
+        command_key = '^[{}{}]'.format(command[0], command[0].upper())
+        COMMANDS[command_key]()
+
+###Window methods###############################################################
+def window_size():
+    return shutil.get_terminal_size()
+
+def clear_screen():
+    os.system('clear')
+
+def header():
+    clear_screen()
+    text = ['FeedMe: {}'.format(SPLASH)]
+    template = [mitu.generate_template('center', window_size()[0])]
+    rprint(template, text, [window_size()[0]], color='cyan')
+
+def display_items(items, columns):##
+    header()
+    texts = []
+    for howmanytimes in range(math.ceil(len(items)/columns)):
+        texts.append([])
+        for column in range(columns):
+            try:
+                texts[howmanytimes].append(items[0])
+                items.pop(0)
+            except IndexError:
+                texts[howmanytimes].append('')
+
+    print(texts)
+    templates = []
+    spacings = []
+    for column in range(columns):
+        spacings.append(int(window_size()[0]/columns))
+        templates.append(mitu.generate_template('center', 
+                                                round(window_size()[0]/columns)))
+    for each in texts:
+        rprint(templates, each, spacings)
+
+####Database methods############################################################
+def db_query(establishment, table, column):
+    base = sql.connect("data/{}.db".format(establishment))
+    cursor = base.cursor()
+    command = "SELECT {0} FROM {1}".format(column, table)
+    query_list = [row[0] for row in cursor.execute(command)]
+    db.close()
+
+    return query_list
+
+def db_create_table(db_path, table, rows):
+    db = sql.connect(db_path)
+    cursor = db.cursor()
+    """try:
+        command = "CREATE TABLE {} """
+    
+
+##Commands######################################################################
 def command_help():
     header()
-    for key, value in COMMANDS.items():
-        print(key, value)
+    print("help screen")
 
-###Use this to clean up the command_orders_new mess fam
-def display_items(items, ask, prompt="> "):
+def command_new():
     header()
-    list_items(items)
-    print(ask)
-    item = rinput(prompt, items.keys())
-    return item
-    
-def list_items(items):
-    for item in enumerate(items):
-        print(item[0], item[1])
-#######
-def command_orders_list():
-    header()
-    for order in orders:
-        print(order)
-        print(order.items)
-
-def command_orders_new():
-
-    def new_item(order):
-        ask = "Type the name of the item you'd like to add"
-        item = display_items(items.keys(), ask)
-        ask = ("Which options would you like to add for the item? Leave " + 
-              "blank for no options.")
-        option = display_items(items[item], ask)
-        order.add_item(item, options)
-
-    header()
-    print("Enter a name for the order (e.g. 'favorite pizza')")
+    print("Enter a name for the order (e.g. 'fav pizza')")
     name = input("> ")
 
-    ask="Enter establishment name or type 'list'"
-    establishment = list_items(establishments, ask)
+    items = ['ggg', 'gggg', 'hhhhhhh', 'hhhhhhttt', 'tt', 'ttttttthhh', 'new']
+    display_items(items, 4)
 
-    ask="Enter delivery method"
-    method = list_items(establishments[establishment]['delivery method'], ask)
-    ###
-    if len(personal) != 0:
-        prompt="(Y/n): "
-        ask="Deliver to default address? ({0})".format(
-            personal['address']['default'][0])
-        if confirm_input(prompt, ask):
-            address = personal['address']
-        else:
-            for address in personal['address']:
-                print(personal['address'][address]) #fancy print##unfinished
-    ###
-    order = Order(name, establishment, method, address)
-    new_item(order)
+    input_ = input("")
+
     
-    print("Add more items, or finish order? (Type 'add' or 'finish')")
-    question = rinput("> ", ['add', 'finish'])
-    while question == 'add':
-        new_item(order)
-        print("Add more items, or finish order? (Type 'add' or 'finish')")
-        question = rinput("> ", ['add', 'finish'])
+    
 
-    orders.append(order)
+
 
 def command_quit():
     header()
     if confirm_input(ask="Are you sure you'd like to quit? (Y/n)"):
-        os.system('clear')
+        clear_screen()
         quit()
     else:
         header()
 
-def command_save():
-    with open(F_ORDERS, 'wb') as f:
-        pickle.dump(orders, f)
-    print("orders saved")
+##Constants#####################################################################
+SPLASHES = ['Over 1 billion fed!',
+            'Written in python!',
+            'Splash 3']
 
-def header():
-    os.system('clear')
-    text = "FeedMe"
-    print(text)
+SPLASH = random.choice(SPLASHES)
+COMMANDS = {'^[hH]' : command_help,
+            '^[nN]' : command_new,
+            '^[qQ]' : command_quit}
 
-def load_file(FILE, return_type={}, read_method='r', read_type=json):
-    try:
-        with open(FILE, read_method) as f:
-            data = read_type.load(f)
-    except FileNotFoundError:
-        data = return_type
-    return data
-
-
-###################################################
-F_ESTABLISHMENTS = 'data/establishments.json'
-F_ORDERS = 'data/orders.data'
-F_PERSONAL = 'data/personal.json'
-
-COMMANDS = {'h':command_help,
-            'l':command_orders_list,
-            'n':command_orders_new,
-            's':command_save,
-            'q':command_quit}
-
-items = {'cheeze': ['lipstick'], 'pepeer': ['nomayo','mayo'], 'suasage': []}
-establishments = load_file(F_ESTABLISHMENTS)
-orders = load_file(F_ORDERS,
-                   return_type=[],
-                   read_method='rb',
-                   read_type=pickle)
-personal = load_file(F_PERSONAL)
-main()
+if __name__ == '__main__':
+    main()
