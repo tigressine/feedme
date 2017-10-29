@@ -107,7 +107,7 @@ def db_query(establishment, table, column):
     cursor = base.cursor()
     command = "SELECT {0} FROM {1}".format(column, table)
     query_list = [row[0] for row in cursor.execute(command)]
-    db.close()
+    base.close()
 
     return query_list
 
@@ -118,6 +118,13 @@ def db_create_table(db_path, table, rows):##
         command = "CREATE TABLE {} """
 
 ##Commands######################################################################
+def create_formatted_match_list(matches):
+    formatted_matches = []
+    for match in matches:
+        formatted_match = '(?i)' + match
+        formatted_matches.append(re.sub(' ', ' ?', formmated_match))
+    return formatted_matches
+
 def command_help():##
     header()
     print("help screen")
@@ -129,11 +136,11 @@ def command_new():
     establishments = get_establishments()
     display_items('Establishments', establishments, 5)
     print("\nSelect an establishment.")
-    for each in range(len(establishments)):
-        establishments[each] = '(?i)' + establishments[each]
-        establishments[each] = re.sub(' ', ' ?', establishments[each])
-    print(establishments)
-    establishment = rinput("> ", establishments, regex=True)
+    formatted_establishments = create_formatted_match_list(establishments)
+    establishment = rinput("> ", formatted_establishments, regex=True)
+    print(establishment)
+    menu = db_query('PapaJohns', 'items', 'name')
+    display_items('Menu', menu, 5)
 
     
     
@@ -161,5 +168,5 @@ COMMANDS = {'^[hH]' : command_help,
             '^[qQ]' : command_quit}
 
 if __name__ == '__main__':
-    #TEMPORARY_POPULATE_DATABASE()
+    TEMPORARY_POPULATE_DATABASE()
     main()
